@@ -1,4 +1,4 @@
-import naudiodon2 from 'naudiodon2';
+import naudiodon from '@tokenring-ai/naudiodon3';
 import wav from 'wav';
 import * as fs from 'node:fs';
 import { experimental_transcribe as transcribe } from 'ai';
@@ -46,10 +46,10 @@ export default class LinuxAudioProvider extends AudioProvider {
       bitDepth: 16
     });
 
-    const stream = naudiodon2.AudioIO({
+    const stream = naudiodon.AudioIO({
       inOptions: {
         channelCount: channels,
-        sampleFormat: naudiodon2.SampleFormat16Bit,
+        sampleFormat: naudiodon.SampleFormat16Bit,
         sampleRate,
         deviceId: -1
       }
@@ -126,10 +126,10 @@ export default class LinuxAudioProvider extends AudioProvider {
       let stream: any = null;
 
       reader.on('format', (format) => {
-        stream = naudiodon2.AudioIO({
+        stream = naudiodon.AudioIO({
           outOptions: {
             channelCount: format.channels,
-            sampleFormat: naudiodon2.SampleFormat16Bit,
+            sampleFormat: naudiodon.SampleFormat16Bit,
             sampleRate: format.sampleRate,
             deviceId: -1
           }
