@@ -1,18 +1,25 @@
-import naudiodon from '@tokenring-ai/naudiodon3';
-import wav from 'wav';
-import * as fs from 'node:fs';
-import { experimental_transcribe as transcribe } from 'ai';
-import { experimental_generateSpeech } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import {openai} from '@ai-sdk/openai';
 import AudioProvider, {
-  type RecordingOptions,
+  type AudioResult,
   type PlaybackOptions,
-  type TranscriptionOptions,
-  type TextToSpeechOptions,
+  type RecordingOptions,
   type RecordingResult,
-  type TranscriptionResult,
-  type AudioResult
+  type TextToSpeechOptions,
+  type TranscriptionOptions,
+  type TranscriptionResult
 } from '@tokenring-ai/audio/AudioProvider';
+import naudiodon from '@tokenring-ai/naudiodon3';
+import {experimental_generateSpeech, experimental_transcribe as transcribe} from 'ai';
+import * as fs from 'node:fs';
+import wav from 'wav';
+import {z} from 'zod';
+
+export const LinuxAudioProviderOptionsSchema = z.object({
+  type: z.literal("linux"),
+  sampleRate: z.number().optional(),
+  channels: z.number().optional(),
+  format: z.string().optional()
+});
 
 export interface LinuxAudioProviderOptions {
   sampleRate?: number;
