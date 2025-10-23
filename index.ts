@@ -4,7 +4,7 @@ import AudioService from "@tokenring-ai/audio/AudioService";
 import LinuxAudioProvider, {LinuxAudioProviderOptionsSchema} from "./LinuxAudioProvider.ts";
 import packageJSON from './package.json' with {type: 'json'};
 
-export const packageInfo: TokenRingPackage = {
+export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
@@ -21,6 +21,6 @@ export const packageInfo: TokenRingPackage = {
       });
     }
   }
-};
+} as TokenRingPackage;
 
-export { default as LinuxAudioProvider } from "./LinuxAudioProvider.ts";
+export {default as LinuxAudioProvider} from "./LinuxAudioProvider.ts";
