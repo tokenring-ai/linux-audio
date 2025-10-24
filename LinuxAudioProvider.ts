@@ -6,13 +6,13 @@ import AudioProvider, {
   type RecordingResult,
   type TextToSpeechOptions,
   type TranscriptionOptions,
-  type TranscriptionResult
 } from '@tokenring-ai/audio/AudioProvider';
 import ModelRegistry from '@tokenring-ai/ai-client/ModelRegistry';
 import naudiodon from '@tokenring-ai/naudiodon3';
 import * as fs from 'node:fs';
 import wav from 'wav';
 import {z} from 'zod';
+import { TranscriptionResult } from "@tokenring-ai/ai-client/client/AITranscriptionClient";
 
 export const LinuxAudioProviderOptionsSchema = z.object({
   type: z.literal("linux"),
