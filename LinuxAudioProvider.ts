@@ -1,4 +1,4 @@
-import {openai} from '@ai-sdk/openai';
+import Agent from '@tokenring-ai/agent/Agent';
 import AudioProvider, {
   type AudioResult,
   type PlaybackOptions,
@@ -8,8 +8,8 @@ import AudioProvider, {
   type TranscriptionOptions,
   type TranscriptionResult
 } from '@tokenring-ai/audio/AudioProvider';
+import ModelRegistry from '@tokenring-ai/ai-client/ModelRegistry';
 import naudiodon from '@tokenring-ai/naudiodon3';
-import {experimental_generateSpeech, experimental_transcribe as transcribe} from 'ai';
 import * as fs from 'node:fs';
 import wav from 'wav';
 import {z} from 'zod';
@@ -73,52 +73,45 @@ export default class LinuxAudioProvider extends AudioProvider {
     return { filePath };
   }
 
-  async transcribe(audioFile: any, options?: TranscriptionOptions): Promise<TranscriptionResult> {
-    const model = options?.model || 'whisper-1';
+  async transcribe(audioFile: any, options?: TranscriptionOptions, agent?: Agent): Promise<TranscriptionResult> {
+    if (!agent) throw new Error('Agent required for transcription');
     
-    const transcribeOptions: any = {
-      model: openai.transcription(model),
-      audio: audioFile
-    };
+    const modelRegistry = agent.requireServiceByType(ModelRegistry);
+    const modelName = options?.model || 'whisper-1';
+    const client = await modelRegistry.transcription.getFirstOnlineClient(modelName);
 
-    if (options?.language) {
-      transcribeOptions.language = options.language;
-    }
+    const audioBuffer = typeof audioFile === 'string' 
+      ? fs.readFileSync(audioFile)
+      : audioFile;
 
-    if (options?.timestampGranularity) {
-      transcribeOptions.providerOptions = {
-        openai: {
-          timestampGranularities: [options.timestampGranularity]
-        }
-      };
-    }
+    const [text] = await client.transcribe(
+      {
+        audio: audioBuffer,
+        language: options?.language,
+        prompt: options?.prompt,
+      },
+      agent
+    );
 
-    const result = await transcribe(transcribeOptions);
-    return { text: result.text };
+    return { text };
   }
 
-  async speak(text: string, options?: TextToSpeechOptions): Promise<AudioResult> {
-    const model = options?.model || 'tts-1';
-    const voice = options?.voice || 'alloy';
-    const speed = options?.speed || 1.0;
-    const format = options?.format || 'mp3';
+  async speak(text: string, options?: TextToSpeechOptions, agent?: Agent): Promise<AudioResult> {
+    if (!agent) throw new Error('Agent required for speech generation');
+    
+    const modelRegistry = agent.requireServiceByType(ModelRegistry);
+    const modelName = options?.model || 'tts-1';
+    const client = await modelRegistry.speech.getFirstOnlineClient(modelName);
 
-    const speakOptions: any = {
-      model: openai.speech(model),
-      voice,
-      text,
-      speed
-    };
+    const [audioData] = await client.generateSpeech(
+      {
+        text,
+        voice: options?.voice || 'alloy',
+        speed: options?.speed || 1.0,
+      },
+      agent
+    );
 
-    if (format) {
-      speakOptions.providerOptions = {
-        openai: {
-          responseFormat: format
-        }
-      };
-    }
-
-    const audioData = await experimental_generateSpeech(speakOptions);
     return { data: audioData };
   }
 
