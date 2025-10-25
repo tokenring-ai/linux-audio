@@ -11,7 +11,7 @@ export default {
   install(agentTeam: AgentTeam) {
     const audioConfig = agentTeam.getConfigSlice('audio', AudioConfigSchema);
     if (audioConfig) {
-      agentTeam.services.waitForItemByType(AudioService).then(audioService => {
+      agentTeam.waitForService(AudioService, audioService => {
         for (const name in audioConfig.providers) {
           const provider = audioConfig.providers[name];
           if (provider.type === "linux") {
