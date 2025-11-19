@@ -2,7 +2,9 @@
 
 ## Overview
 
-The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation of the AudioProvider interface using the naudiodon2 library for native audio operations. It enables recording, playback, transcription, and text-to-speech capabilities on Linux systems within the Token Ring AI framework.
+The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation of the AudioProvider interface using
+the naudiodon2 library for native audio operations. It enables recording, playback, transcription, and text-to-speech
+capabilities on Linux systems within the Token Ring AI framework.
 
 ## Features
 
@@ -15,6 +17,7 @@ The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation
 ## Installation
 
 Requires naudiodon2 native dependencies for Linux audio support:
+
 ```bash
 # Install system dependencies (Ubuntu/Debian)
 sudo apt-get install libasound2-dev

@@ -1,21 +1,21 @@
 {
-  "name": "@tokenring-ai/linux-audio",
-  "version": "0.1.0",
-  "description": "Linux audio integration using naudiodon2 for Token Ring",
-  "dependencies": {
-    "@tokenring-ai/agent": "0.1.0",
-    "@tokenring-ai/audio": "0.1.0",
-    "@tokenring-ai/ai-client": "0.1.0",
-    "@tokenring-ai/naudiodon3": "^2.5.0",
-    "wav": "^1.0.2",
-    "@types/wav": "^1.0.2",
-    "zod": "^4.0.17"
-  },
-  "exports": {
-    ".": "./index.ts",
-    "./*": "./*.ts"
-  },
-  "types": "./index.ts",
-  "license": "MIT",
-  "type": "module"
+ "name": "@tokenring-ai/linux-audio",
+ "version": "0.1.0",
+ "description": "Linux audio integration using naudiodon2 for Token Ring",
+ "dependencies": {
+  "@tokenring-ai/agent": "0.1.0",
+  "@tokenring-ai/audio": "0.1.0",
+  "@tokenring-ai/chat": "0.1.0",
+  "@tokenring-ai/naudiodon3": "^2.5.0",
+  "wav": "^1.0.2",
+  "@types/wav": "^1.0.4",
+  "zod": "^4.1.12"
+ },
+ "exports": {
+  ".": "./index.ts",
+  "./*": "./*.ts"
+ },
+ "types": "./index.ts",
+ "license": "MIT",
+ "type": "module"
 }
