@@ -1,6 +1,6 @@
 import Agent from '@tokenring-ai/agent/Agent';
 import {TranscriptionResult} from "@tokenring-ai/ai-client/client/AITranscriptionClient";
-import ModelRegistry from '@tokenring-ai/ai-client/ModelRegistry';
+import {SpeechModelRegistry, TranscriptionModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
 import AudioProvider, {
   type AudioResult,
   type PlaybackOptions,
@@ -76,9 +76,9 @@ export default class LinuxAudioProvider extends AudioProvider {
   async transcribe(audioFile: any, options?: TranscriptionOptions, agent?: Agent): Promise<TranscriptionResult> {
     if (!agent) throw new Error('Agent required for transcription');
 
-    const modelRegistry = agent.requireServiceByType(ModelRegistry);
+    const transcriptionModelRegistry = agent.requireServiceByType(TranscriptionModelRegistry);
     const modelName = options?.model || 'whisper-1';
-    const client = await modelRegistry.transcription.getFirstOnlineClient(modelName);
+    const client = await transcriptionModelRegistry.getFirstOnlineClient(modelName);
 
     const audioBuffer = typeof audioFile === 'string'
       ? fs.readFileSync(audioFile)
@@ -99,9 +99,9 @@ export default class LinuxAudioProvider extends AudioProvider {
   async speak(text: string, options?: TextToSpeechOptions, agent?: Agent): Promise<AudioResult> {
     if (!agent) throw new Error('Agent required for speech generation');
 
-    const modelRegistry = agent.requireServiceByType(ModelRegistry);
+    const speechModelRegistry = agent.requireServiceByType(SpeechModelRegistry);
     const modelName = options?.model || 'tts-1';
-    const client = await modelRegistry.speech.getFirstOnlineClient(modelName);
+    const client = await speechModelRegistry.getFirstOnlineClient(modelName);
 
     const [audioData] = await client.generateSpeech(
       {
