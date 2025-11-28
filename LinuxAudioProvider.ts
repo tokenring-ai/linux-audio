@@ -28,9 +28,9 @@ export interface LinuxAudioProviderOptions {
 }
 
 export default class LinuxAudioProvider extends AudioProvider {
-  private sampleRate: number;
-  private channels: number;
-  private format: string;
+  private readonly sampleRate: number;
+  private readonly channels: number;
+  private readonly format: string;
 
   constructor(options: LinuxAudioProviderOptions = {}) {
     super();
@@ -67,7 +67,7 @@ export default class LinuxAudioProvider extends AudioProvider {
 
     await new Promise((resolve) => abortSignal.addEventListener('abort', resolve, {once: true}));
 
-    stream.quit();
+    await stream.quit();
     writer.end();
 
     return {filePath};
