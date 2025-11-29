@@ -1,11 +1,13 @@
 {
  "name": "@tokenring-ai/linux-audio",
- "version": "0.1.0",
+ "version": "0.2.0",
  "description": "Linux audio integration using naudiodon2 for Token Ring",
  "dependencies": {
-  "@tokenring-ai/agent": "0.1.0",
-  "@tokenring-ai/audio": "0.1.0",
-  "@tokenring-ai/chat": "0.1.0",
+  "@tokenring-ai/ai-client": "0.2.0",
+  "@tokenring-ai/app": "0.2.0",
+  "@tokenring-ai/agent": "0.2.0",
+  "@tokenring-ai/audio": "0.2.0",
+  "@tokenring-ai/chat": "0.2.0",
   "@tokenring-ai/naudiodon3": "^2.5.0",
   "wav": "^1.0.2",
   "@types/wav": "^1.0.4",
