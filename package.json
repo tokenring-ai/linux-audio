@@ -11,7 +11,7 @@
     "@tokenring-ai/naudiodon3": "2.5.0",
     "wav": "^1.0.2",
     "@types/wav": "^1.0.4",
-    "zod": "^4.1.13"
+    "zod": "catalog:"
   },
   "exports": {
     ".": "./index.ts",
