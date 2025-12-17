@@ -9,7 +9,7 @@ import AudioProvider, {
   type TextToSpeechOptions,
   type TranscriptionOptions,
 } from '@tokenring-ai/audio/AudioProvider';
-import naudiodon from '@tokenring-ai/naudiodon3';
+import AudioIO, { SampleFormat16Bit } from '@tokenring-ai/naudiodon3';
 import * as fs from 'node:fs';
 import wav from 'wav';
 import {z} from 'zod';
@@ -53,10 +53,10 @@ export default class LinuxAudioProvider extends AudioProvider {
       bitDepth: 16
     });
 
-    const stream = naudiodon.AudioIO({
+    const stream = AudioIO({
       inOptions: {
         channelCount: channels,
-        sampleFormat: naudiodon.SampleFormat16Bit,
+        sampleFormat: SampleFormat16Bit,
         sampleRate,
         deviceId: -1
       }
@@ -126,10 +126,10 @@ export default class LinuxAudioProvider extends AudioProvider {
       let stream: any = null;
 
       reader.on('format', (format) => {
-        stream = naudiodon.AudioIO({
+        stream = AudioIO({
           outOptions: {
             channelCount: format.channels,
-            sampleFormat: naudiodon.SampleFormat16Bit,
+            sampleFormat: SampleFormat16Bit,
             sampleRate: format.sampleRate,
             deviceId: -1
           }
