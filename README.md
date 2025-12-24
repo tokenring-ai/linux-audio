@@ -1,6 +1,6 @@
 # @tokenring-ai/linux-audio
 
-A Linux-specific audio provider plugin for Token Ring AI, built on naudiodon3 for native audio operations.
+Linux audio integration using naudiodon3 for Token Ring AI, providing native audio recording, playback, transcription, and text-to-speech capabilities on Linux systems.
 
 ## Overview
 
@@ -37,13 +37,13 @@ The package is designed to work within the Token Ring AI monorepo:
 
 ```bash
 # Install as part of the monorepo
-npm install
+bun install
 ```
 
 Or as a standalone package:
 
 ```bash
-npm install @tokenring-ai/linux-audio
+bun install @tokenring-ai/linux-audio
 ```
 
 ## Usage
@@ -134,7 +134,7 @@ Records audio from the system microphone.
 
 **Returns:** `Promise<RecordingResult>` with file path to the recorded audio
 
-##### `transcribe(audioFile: any, options?: TranscriptionOptions, agent?: Agent): Promise<TranscriptionResult>`
+##### `transcribe(audioFile: string | Buffer, options?: TranscriptionOptions, agent?: Agent): Promise<TranscriptionResult>`
 
 Transcribes audio to text using AI models.
 
@@ -203,7 +203,7 @@ Configure the provider in your Token Ring AI app configuration:
 
 - `@tokenring-ai/agent`: Token Ring AI agent framework
 - `@tokenring-ai/audio`: Audio service and interfaces
-- `@tokenring-ai/chat`: Chat functionality
+- `@tokenring-ai/ai-client`: AI client for transcription and speech generation
 - `@tokenring-ai/naudiodon3`: Native audio I/O for Node.js (v2.5.0+)
 - `wav`: WAV file format support (v1.0.2+)
 - `zod`: Schema validation (v4.1.12+)
@@ -214,7 +214,7 @@ Configure the provider in your Token Ring AI app configuration:
 
 ## System Requirements
 
-- Linux operating system
+- Linux operating system (Ubuntu/Debian tested)
 - ALSA (Advanced Linux Sound Architecture)
 - Node.js 16+ or later
 - System audio libraries: `libasound2-dev`
@@ -236,12 +236,28 @@ For transcription and text-to-speech functionality:
 1. Ensure you have a valid AI model registry configured
 2. Check that the required AI services are available
 3. Verify network connectivity to AI services
+4. Make sure the agent parameter is provided for transcription and speech generation
+
+### Error Handling
+
+The provider includes proper error handling:
+
+```typescript
+try {
+  const transcription = await audioService.transcribe(audioFile, options, agent);
+} catch (error) {
+  if (error instanceof Error) {
+    console.error('Transcription failed:', error.message);
+  }
+}
+```
 
 ### Performance Considerations
 
 - Higher sample rates improve audio quality but increase file size
 - Mono channels reduce file size compared to stereo
 - Recording duration is limited by available disk space
+- Ensure proper cleanup of audio streams to avoid resource leaks
 
 ## License
 
