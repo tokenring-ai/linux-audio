@@ -16,6 +16,8 @@ This package is designed to work seamlessly with the Token Ring AI ecosystem, in
 - **Text-to-Speech**: Generate speech from text using AI TTS models
 - **Format Support**: WAV format for recording/playback
 - **Plugin Integration**: Automatically registers with Token Ring AI AudioService
+- **Configurable Options**: Sample rate, channels, and format customization
+- **Error Handling**: Comprehensive error handling for audio operations
 
 ## Installation
 
@@ -134,6 +136,14 @@ Records audio from the system microphone.
 
 **Returns:** `Promise<RecordingResult>` with file path to the recorded audio
 
+```typescript
+const recording = await provider.record(abortSignal, {
+  sampleRate: 44100,
+  channels: 2
+});
+console.log('Recording saved to:', recording.filePath);
+```
+
 ##### `transcribe(audioFile: string | Buffer, options?: TranscriptionOptions, agent?: Agent): Promise<TranscriptionResult>`
 
 Transcribes audio to text using AI models.
@@ -144,6 +154,14 @@ Transcribes audio to text using AI models.
 - `agent`: Token Ring AI agent instance (required)
 
 **Returns:** `Promise<TranscriptionResult>` with transcribed text
+
+```typescript
+const transcription = await provider.transcribe(recording.filePath, {
+  language: 'en',
+  model: 'whisper-1'
+}, agent);
+console.log('Transcription:', transcription.text);
+```
 
 ##### `speak(text: string, options?: TextToSpeechOptions, agent?: Agent): Promise<AudioResult>`
 
@@ -156,6 +174,14 @@ Converts text to speech using AI models.
 
 **Returns:** `Promise<AudioResult>` with audio data
 
+```typescript
+const speech = await provider.speak('Hello, world!', {
+  voice: 'alloy',
+  speed: 1.0
+}, agent);
+console.log('Speech generated with length:', speech.data.length);
+```
+
 ##### `playback(filename: string, options?: PlaybackOptions): Promise<string>`
 
 Plays a WAV audio file through the system audio.
@@ -165,6 +191,11 @@ Plays a WAV audio file through the system audio.
 - `options`: Playback options
 
 **Returns:** `Promise<string>` with the filename
+
+```typescript
+await provider.playback(speech.filePath);
+console.log('Playback completed');
+```
 
 ## Configuration
 
@@ -211,6 +242,8 @@ Configure the provider in your Token Ring AI app configuration:
 ### Development Dependencies
 
 - `@types/wav`: TypeScript definitions for WAV library
+- `vitest`: Testing framework (v0.34.0+)
+- `typescript`: TypeScript compiler (v5.2.2+)
 
 ## System Requirements
 
@@ -219,40 +252,25 @@ Configure the provider in your Token Ring AI app configuration:
 - Node.js 16+ or later
 - System audio libraries: `libasound2-dev`
 
-## Troubleshooting
+## Error Handling
 
-### Audio Device Issues
-
-If you encounter audio device problems:
-
-1. Check if ALSA is properly installed: `aplay -l`
-2. Verify audio permissions: Ensure your user has access to audio devices
-3. Test audio manually: `arecord -d 5 test.wav && aplay test.wav`
-
-### Transcription/TTS Issues
-
-For transcription and text-to-speech functionality:
-
-1. Ensure you have a valid AI model registry configured
-2. Check that the required AI services are available
-3. Verify network connectivity to AI services
-4. Make sure the agent parameter is provided for transcription and speech generation
-
-### Error Handling
-
-The provider includes proper error handling:
+The provider includes comprehensive error handling:
 
 ```typescript
 try {
-  const transcription = await audioService.transcribe(audioFile, options, agent);
+  const recording = await provider.record(abortSignal);
 } catch (error) {
   if (error instanceof Error) {
-    console.error('Transcription failed:', error.message);
+    console.error('Recording failed:', error.message);
+    // Handle specific error cases
+    if (error.message.includes('Audio device not available')) {
+      // Handle audio device issues
+    }
   }
 }
 ```
 
-### Performance Considerations
+## Performance Considerations
 
 - Higher sample rates improve audio quality but increase file size
 - Mono channels reduce file size compared to stereo
@@ -262,7 +280,3 @@ try {
 ## License
 
 MIT License - see LICENSE file for details.
-
-## Contributing
-
-This package is part of the Token Ring AI ecosystem. Please refer to the main repository for contribution guidelines.
