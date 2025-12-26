@@ -1,26 +1,30 @@
-import TokenRingApp from "@tokenring-ai/app";
+import {TokenRingPlugin} from "@tokenring-ai/app";
 import {AudioConfigSchema} from "@tokenring-ai/audio";
 import AudioService from "@tokenring-ai/audio/AudioService";
-import {TokenRingPlugin} from "@tokenring-ai/app";
+import {z} from "zod";
 import LinuxAudioProvider, {LinuxAudioProviderOptionsSchema} from "./LinuxAudioProvider.ts";
 import packageJSON from './package.json' with {type: 'json'};
+
+const packageConfigSchema = z.object({
+  audio: AudioConfigSchema,
+});
 
 
 export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
-  install(app: TokenRingApp) {
-    const audioConfig = app.getConfigSlice('audio', AudioConfigSchema);
-    if (audioConfig) {
+  install(app, config) {
+    if (config.audio) {
       app.waitForService(AudioService, audioService => {
-        for (const name in audioConfig.providers) {
-          const provider = audioConfig.providers[name];
+        for (const name in config.audio!.providers) {
+          const provider = config.audio!.providers[name];
           if (provider.type === "linux") {
             audioService.registerProvider(name, new LinuxAudioProvider(LinuxAudioProviderOptionsSchema.parse(provider)));
           }
         }
       });
     }
-  }
-} satisfies TokenRingPlugin;
+  },
+  config: packageConfigSchema
+} satisfies TokenRingPlugin<typeof packageConfigSchema>;
