@@ -78,7 +78,7 @@ export default class LinuxAudioProvider extends AudioProvider {
 
     const transcriptionModelRegistry = agent.requireServiceByType(TranscriptionModelRegistry);
     const modelName = options?.model || 'whisper-1';
-    const client = await transcriptionModelRegistry.getFirstOnlineClient(modelName);
+    const client = await transcriptionModelRegistry.getClient(modelName);
 
     const audioBuffer = typeof audioFile === 'string'
       ? fs.readFileSync(audioFile)
@@ -101,7 +101,7 @@ export default class LinuxAudioProvider extends AudioProvider {
 
     const speechModelRegistry = agent.requireServiceByType(SpeechModelRegistry);
     const modelName = options?.model || 'tts-1';
-    const client = await speechModelRegistry.getFirstOnlineClient(modelName);
+    const client = await speechModelRegistry.getClient(modelName);
 
     const [audioData] = await client.generateSpeech(
       {
