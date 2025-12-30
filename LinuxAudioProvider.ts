@@ -1,63 +1,44 @@
-import Agent from '@tokenring-ai/agent/Agent';
-import {TranscriptionResult} from "@tokenring-ai/ai-client/client/AITranscriptionClient";
-import {SpeechModelRegistry, TranscriptionModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
-import AudioProvider, {
-  type AudioResult,
-  type PlaybackOptions,
-  type RecordingOptions,
-  type RecordingResult,
-  type TextToSpeechOptions,
-  type TranscriptionOptions,
-} from '@tokenring-ai/audio/AudioProvider';
-import AudioIO, { SampleFormat16Bit } from '@tokenring-ai/naudiodon3';
-import * as fs from 'node:fs';
+import {type AudioProvider, type RecordingOptions, type RecordingResult,} from '@tokenring-ai/audio/AudioProvider';
+import AudioIO, {SampleFormat16Bit} from '@tokenring-ai/naudiodon3';
+import {spawn} from 'node:child_process';
+import fs from 'node:fs';
 import wav from 'wav';
 import {z} from 'zod';
 
 export const LinuxAudioProviderOptionsSchema = z.object({
   type: z.literal("linux"),
-  sampleRate: z.number().optional(),
-  channels: z.number().optional(),
-  format: z.string().optional()
+  record: z.object({
+    sampleRate: z.number().default(48000),
+    channels: z.number().default(1),
+    format: z.string().default('wav'),
+  }).default({
+    sampleRate: 48000,
+    channels: 1,
+    format: 'wav',
+  }),
+  playback: z.object({
+  }).default({})
 });
 
-export interface LinuxAudioProviderOptions {
-  sampleRate?: number;
-  channels?: number;
-  format?: string;
-}
 
-export default class LinuxAudioProvider extends AudioProvider {
-  private readonly sampleRate: number;
-  private readonly channels: number;
-  private readonly format: string;
+export default class LinuxAudioProvider implements AudioProvider {
+  constructor(readonly options: z.output<typeof LinuxAudioProviderOptionsSchema>) {}
 
-  constructor(options: LinuxAudioProviderOptions = {}) {
-    super();
-    this.sampleRate = options.sampleRate || 48000;
-    this.channels = options.channels || 1;
-    this.format = options.format || 'wav';
-  }
-
-  async record(abortSignal: AbortSignal, options?: RecordingOptions): Promise<RecordingResult> {
-    const sampleRate = options?.sampleRate || this.sampleRate;
-    const channels = options?.channels || this.channels;
-    const format = options?.format || this.format;
-
+  async record(abortSignal: AbortSignal, options: RecordingOptions): Promise<RecordingResult> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filePath = `/tmp/recording-${timestamp}.${format}`;
+    const filePath = `/tmp/recording-${timestamp}.${this.options.record.format}`;
 
     const writer = new wav.FileWriter(filePath, {
-      channels,
-      sampleRate,
+      channels: options.channels ?? this.options.record.channels,
+      sampleRate: options?.sampleRate ?? this.options.record.sampleRate,
       bitDepth: 16
     });
 
     const stream = AudioIO({
       inOptions: {
-        channelCount: channels,
+        channelCount: options.channels ?? this.options.record.channels,
         sampleFormat: SampleFormat16Bit,
-        sampleRate,
+        sampleRate: options.channels ?? this.options.record.sampleRate,
         deviceId: -1
       }
     });
@@ -73,55 +54,25 @@ export default class LinuxAudioProvider extends AudioProvider {
     return {filePath};
   }
 
-  async transcribe(audioFile: any, options?: TranscriptionOptions, agent?: Agent): Promise<TranscriptionResult> {
-    if (!agent) throw new Error('Agent required for transcription');
-
-    const transcriptionModelRegistry = agent.requireServiceByType(TranscriptionModelRegistry);
-    const modelName = options?.model || 'whisper-1';
-    const client = await transcriptionModelRegistry.getClient(modelName);
-
-    const audioBuffer = typeof audioFile === 'string'
-      ? fs.readFileSync(audioFile)
-      : audioFile;
-
-    const [text] = await client.transcribe(
-      {
-        audio: audioBuffer,
-        language: options?.language,
-        prompt: options?.prompt,
-      },
-      agent
-    );
-
-    return {text};
-  }
-
-  async speak(text: string, options?: TextToSpeechOptions, agent?: Agent): Promise<AudioResult> {
-    if (!agent) throw new Error('Agent required for speech generation');
-
-    const speechModelRegistry = agent.requireServiceByType(SpeechModelRegistry);
-    const modelName = options?.model || 'tts-1';
-    const client = await speechModelRegistry.getClient(modelName);
-
-    const [audioData] = await client.generateSpeech(
-      {
-        text,
-        voice: options?.voice || 'alloy',
-        speed: options?.speed || 1.0,
-      },
-      agent
-    );
-
-    return {data: audioData};
-  }
-
-  async playback(filename: string, options?: PlaybackOptions): Promise<string> {
+  async playback(filename: string): Promise<string> {
     return new Promise((resolve, reject) => {
       if (!fs.existsSync(filename)) {
         reject(new Error(`Audio file not found: ${filename}`));
         return;
       }
 
+      const ext = filename.toLowerCase().split('.').pop();
+      
+      if (ext === 'wav') {
+        this.playbackWav(filename).then(resolve).catch(reject);
+      } else {
+        this.playbackWithFfmpeg(filename).then(resolve).catch(reject);
+      }
+    });
+  }
+
+  private async playbackWav(filename: string): Promise<string> {
+    return new Promise((resolve, reject) => {
       const reader = new wav.Reader();
       let stream: any = null;
 
@@ -149,8 +100,44 @@ export default class LinuxAudioProvider extends AudioProvider {
         reject(err);
       });
 
-      const fileStream = fs.createReadStream(filename);
-      fileStream.pipe(reader);
+      fs.createReadStream(filename).pipe(reader);
+    });
+  }
+
+  private async playbackWithFfmpeg(filename: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const ffmpeg = spawn('ffmpeg', [
+        '-i', filename,
+        '-f', 's16le',
+        '-acodec', 'pcm_s16le',
+        '-ar', '48000',
+        '-ac', '2',
+        'pipe:1'
+      ]);
+
+      const stream = AudioIO({
+        outOptions: {
+          channelCount: 2,
+          sampleFormat: SampleFormat16Bit,
+          sampleRate: 48000,
+          deviceId: -1
+        }
+      });
+
+      ffmpeg.stdout.pipe(stream);
+      stream.start();
+
+      ffmpeg.on('close', () => {
+        stream.quit();
+        resolve(filename);
+      });
+
+      ffmpeg.on('error', (err) => {
+        stream.quit();
+        reject(err);
+      });
+
+      ffmpeg.stderr.on('data', () => {});
     });
   }
 }
