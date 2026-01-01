@@ -1,12 +1,12 @@
 import {TokenRingPlugin} from "@tokenring-ai/app";
-import {AudioConfigSchema} from "@tokenring-ai/audio";
+import {AudioServiceConfigSchema} from "@tokenring-ai/audio";
 import AudioService from "@tokenring-ai/audio/AudioService";
 import {z} from "zod";
 import LinuxAudioProvider, {LinuxAudioProviderOptionsSchema} from "./LinuxAudioProvider.ts";
 import packageJSON from './package.json' with {type: 'json'};
 
 const packageConfigSchema = z.object({
-  audio: AudioConfigSchema,
+  audio: AudioServiceConfigSchema,
 });
 
 
