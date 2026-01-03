@@ -1,23 +1,21 @@
 # @tokenring-ai/linux-audio
 
-Linux audio integration using naudiodon3 for Token Ring AI, providing native audio recording, playback, transcription, and text-to-speech capabilities on Linux systems.
+Linux audio integration using naudiodon3 for Token Ring AI, providing native audio recording and playback capabilities on Linux systems.
 
 ## Overview
 
-The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation of the AudioProvider interface using the naudiodon3 library for native audio operations. It enables recording, playback, transcription, and text-to-speech capabilities on Linux systems within the Token Ring AI framework.
+The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation of the `AudioProvider` interface using the naudiodon3 library for native audio operations. It enables audio recording and playback on Linux systems within the Token Ring AI framework.
 
-This package is designed to work seamlessly with the Token Ring AI ecosystem, integrating with the AudioService and leveraging AI model registries for transcription and text-to-speech functionality.
+This package is designed to work seamlessly with the Token Ring AI ecosystem, integrating with the AudioService as a plugin that automatically registers the LinuxAudioProvider when configured.
 
 ## Features
 
-- **Recording**: Capture audio from microphone using naudiodon3
-- **Playback**: Play WAV audio files through system audio
-- **Transcription**: Convert audio to text using AI transcription models
-- **Text-to-Speech**: Generate speech from text using AI TTS models
-- **Format Support**: WAV format for recording/playback
-- **Plugin Integration**: Automatically registers with Token Ring AI AudioService
+- **Recording**: Capture audio from microphone using naudiodon3 with configurable sample rate and channels
+- **Playback**: Play WAV audio files through system audio with automatic format conversion via ffmpeg for non-WAV files
+- **Format Support**: WAV format for recording; supports playback of multiple audio formats via ffmpeg
+- **Plugin Integration**: Automatically registers with Token Ring AI AudioService when configured
 - **Configurable Options**: Sample rate, channels, and format customization
-- **Error Handling**: Comprehensive error handling for audio operations
+- **Abort Signal Support**: Recording can be stopped via AbortSignal
 
 ## Installation
 
@@ -31,6 +29,9 @@ sudo apt-get install libasound2-dev
 
 # Install additional dependencies if needed
 sudo apt-get install build-essential
+
+# Optional: for non-WAV audio playback
+sudo apt-get install ffmpeg
 ```
 
 ### Package Installation
@@ -52,41 +53,66 @@ bun install @tokenring-ai/linux-audio
 
 ### Plugin Registration (Automatic)
 
-When used as a Token Ring AI plugin, the LinuxAudioProvider is automatically registered with the AudioService:
+When used as a Token Ring AI plugin, the LinuxAudioProvider is automatically registered with the AudioService based on the app configuration:
 
 ```typescript
 // The plugin is automatically registered when installed in a Token Ring AI app
 // No manual registration required
+
+// Configure in your app config
+const config = {
+  audio: {
+    providers: {
+      linux: {
+        type: 'linux',
+        record: {
+          sampleRate: 48000,
+          channels: 1,
+          format: 'wav'
+        },
+        playback: {}
+      }
+    }
+  }
+};
 ```
 
-### Manual Usage
+### Direct Usage
 
 ```typescript
-import { LinuxAudioProvider } from '@tokenring-ai/linux-audio';
-import { AudioService } from '@tokenring-ai/audio';
-import { TokenRingApp } from '@tokenring-ai/app';
+import LinuxAudioProvider from './LinuxAudioProvider.ts';
+import { LinuxAudioProviderOptionsSchema } from './LinuxAudioProvider.ts';
 
 // Create provider with custom options
-const provider = new LinuxAudioProvider({
+const provider = new LinuxAudioProvider(LinuxAudioProviderOptionsSchema.parse({
+  type: 'linux',
+  record: {
+    sampleRate: 48000,
+    channels: 1,
+    format: 'wav'
+  },
+  playback: {}
+}));
+
+// Record audio
+const abortController = new AbortController();
+const recording = await provider.record(abortController.signal, {
   sampleRate: 48000,
-  channels: 1,
-  format: 'wav'
+  channels: 1
 });
+console.log('Recording saved to:', recording.filePath);
 
-// Register with AudioService
-const audioService = new AudioService();
-audioService.registerProvider('linux', provider);
-audioService.setActiveProvider('linux');
-
-// Use audio operations
-const recording = await audioService.record(abortSignal);
-const transcription = await audioService.transcribe(recording.filePath);
-const speech = await audioService.speak('Hello, world!');
+// Play back audio
+await provider.playback(recording.filePath);
 ```
 
-### Configuration via Token Ring AI App
+## Chat Commands
 
-Configure the Linux audio provider through the app's configuration:
+This package does not define chat commands. Chat commands are handled by the `@tokenring-ai/audio` package.
+
+## Plugin Configuration
+
+Configure the provider in your Token Ring AI app configuration:
 
 ```typescript
 // In your app configuration
@@ -95,170 +121,128 @@ const config = {
     providers: {
       linux: {
         type: 'linux',
-        sampleRate: 48000,
-        channels: 1,
-        format: 'wav'
+        record: {
+          sampleRate: 48000,
+          channels: 1,
+          format: 'wav'
+        },
+        playback: {}
       }
     }
   }
 };
 ```
 
-## API Reference
+### LinuxAudioProviderOptionsSchema
+
+```typescript
+const LinuxAudioProviderOptionsSchema = z.object({
+  type: z.literal("linux"),
+  record: z.object({
+    sampleRate: z.number().default(48000),
+    channels: z.number().default(1),
+    format: z.string().default('wav'),
+  }).default({
+    sampleRate: 48000,
+    channels: 1,
+    format: 'wav',
+  }),
+  playback: z.object({}).default({})
+});
+```
+
+## Tools
+
+This package does not define tools. Tools are handled by the `@tokenring-ai/audio` package.
+
+## Services
 
 ### LinuxAudioProvider
 
-The main class that implements the AudioProvider interface for Linux systems.
+The main class that implements the `AudioProvider` interface for Linux systems.
+
+**Implements:** `AudioProvider`
 
 #### Constructor
 
 ```typescript
-new LinuxAudioProvider(options?: LinuxAudioProviderOptions)
+new LinuxAudioProvider(options: LinuxAudioProviderOptions)
 ```
 
 **Parameters:**
-- `options` (LinuxAudioProviderOptions, optional): Configuration options
-
-**Options:**
-- `sampleRate` (number): Audio sample rate in Hz (default: 48000)
-- `channels` (number): Number of audio channels (default: 1)
-- `format` (string): Audio format (default: 'wav')
+- `options` (LinuxAudioProviderOptions): Configuration options including type, record settings, and playback settings
 
 #### Methods
 
-##### `record(abortSignal: AbortSignal, options?: RecordingOptions): Promise<RecordingResult>`
+##### `record(abortSignal: AbortSignal, options: RecordingOptions): Promise<RecordingResult>`
 
-Records audio from the system microphone.
+Records audio from the system microphone to a WAV file.
 
 **Parameters:**
 - `abortSignal`: AbortSignal to stop recording
-- `options`: Recording options (sample rate, channels, format)
+- `options`: Recording options including sampleRate, channels, and format
 
-**Returns:** `Promise<RecordingResult>` with file path to the recorded audio
+**Returns:** `Promise<RecordingResult>` with filePath to the recorded audio
 
+**Example:**
 ```typescript
-const recording = await provider.record(abortSignal, {
-  sampleRate: 44100,
-  channels: 2
+const abortController = new AbortController();
+const recording = await provider.record(abortController.signal, {
+  sampleRate: 48000,
+  channels: 1
 });
 console.log('Recording saved to:', recording.filePath);
 ```
 
-##### `transcribe(audioFile: string | Buffer, options?: TranscriptionOptions, agent?: Agent): Promise<TranscriptionResult>`
+##### `playback(filename: string): Promise<string>`
 
-Transcribes audio to text using AI models.
-
-**Parameters:**
-- `audioFile`: Path to audio file or audio buffer
-- `options`: Transcription options (language, model, prompt)
-- `agent`: Token Ring AI agent instance (required)
-
-**Returns:** `Promise<TranscriptionResult>` with transcribed text
-
-```typescript
-const transcription = await provider.transcribe(recording.filePath, {
-  language: 'en',
-  model: 'whisper-1'
-}, agent);
-console.log('Transcription:', transcription.text);
-```
-
-##### `speak(text: string, options?: TextToSpeechOptions, agent?: Agent): Promise<AudioResult>`
-
-Converts text to speech using AI models.
+Plays an audio file through the system audio. Supports WAV files directly and other formats via ffmpeg.
 
 **Parameters:**
-- `text`: Text to convert to speech
-- `options`: TTS options (voice, speed, model)
-- `agent`: Token Ring AI agent instance (required)
-
-**Returns:** `Promise<AudioResult>` with audio data
-
-```typescript
-const speech = await provider.speak('Hello, world!', {
-  voice: 'alloy',
-  speed: 1.0
-}, agent);
-console.log('Speech generated with length:', speech.data.length);
-```
-
-##### `playback(filename: string, options?: PlaybackOptions): Promise<string>`
-
-Plays a WAV audio file through the system audio.
-
-**Parameters:**
-- `filename`: Path to WAV file
-- `options`: Playback options
+- `filename`: Path to audio file
 
 **Returns:** `Promise<string>` with the filename
 
+**Example:**
 ```typescript
-await provider.playback(speech.filePath);
-console.log('Playback completed');
+await provider.playback('/path/to/audio.wav');
+// Or for other formats
+await provider.playback('/path/to/audio.mp3');
 ```
 
-## Configuration
+## Providers
 
-### LinuxAudioProviderOptions
+This package defines the `LinuxAudioProvider` provider that can be registered with the AudioService.
 
-```typescript
-interface LinuxAudioProviderOptions {
-  sampleRate?: number;    // Audio sample rate in Hz (default: 48000)
-  channels?: number;      // Number of audio channels (default: 1)
-  format?: string;        // Audio format (default: 'wav')
-}
-```
+## RPC Endpoints
 
-### Audio Service Configuration
+This package does not define RPC endpoints.
 
-Configure the provider in your Token Ring AI app configuration:
+## State Management
 
-```json
-{
-  "audio": {
-    "providers": {
-      "linux": {
-        "type": "linux",
-        "sampleRate": 48000,
-        "channels": 1,
-        "format": "wav"
-      }
-    }
-  }
-}
-```
-
-## Dependencies
-
-### Runtime Dependencies
-
-- `@tokenring-ai/agent`: Token Ring AI agent framework
-- `@tokenring-ai/audio`: Audio service and interfaces
-- `@tokenring-ai/ai-client`: AI client for transcription and speech generation
-- `@tokenring-ai/naudiodon3`: Native audio I/O for Node.js (v2.5.0+)
-- `wav`: WAV file format support (v1.0.2+)
-- `zod`: Schema validation (v4.1.12+)
+This package does not implement state management. State is managed by the AudioService.
 
 ### Development Dependencies
 
 - `@types/wav`: TypeScript definitions for WAV library
-- `vitest`: Testing framework (v0.34.0+)
-- `typescript`: TypeScript compiler (v5.2.2+)
+- `vitest`: Testing framework (catalog)
+- `typescript`: TypeScript compiler (catalog)
 
 ## System Requirements
 
 - Linux operating system (Ubuntu/Debian tested)
 - ALSA (Advanced Linux Sound Architecture)
-- Node.js 16+ or later
+- Node.js 18+ or later
 - System audio libraries: `libasound2-dev`
+- Optional: `ffmpeg` for non-WAV audio playback
 
 ## Error Handling
 
-The provider includes comprehensive error handling:
+The provider includes error handling for common failure scenarios:
 
 ```typescript
 try {
-  const recording = await provider.record(abortSignal);
+  const recording = await provider.record(abortController.signal, options);
 } catch (error) {
   if (error instanceof Error) {
     console.error('Recording failed:', error.message);
@@ -268,15 +252,26 @@ try {
     }
   }
 }
+
+// Playback error handling
+try {
+  await provider.playback(filename);
+} catch (error) {
+  if (error instanceof Error) {
+    console.error('Playback failed:', error.message);
+    // Handle file not found or audio device errors
+  }
+}
 ```
 
 ## Performance Considerations
 
 - Higher sample rates improve audio quality but increase file size
-- Mono channels reduce file size compared to stereo
+- Mono channels (1 channel) reduce file size compared to stereo
 - Recording duration is limited by available disk space
-- Ensure proper cleanup of audio streams to avoid resource leaks
+- Recording files are stored in `/tmp/` with timestamp-based filenames
+- Ensure proper cleanup by using AbortSignal to stop recording
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see [LICENSE](./LICENSE) file for details.
