@@ -11,7 +11,7 @@
     "@tokenring-ai/naudiodon3": "2.5.0",
     "wav": "^1.0.2",
     "@types/wav": "^1.0.4",
-    "zod": "catalog:"
+    "zod": "^4.3.6"
   },
   "exports": {
     ".": "./index.ts",
@@ -21,8 +21,8 @@
   "license": "MIT",
   "type": "module",
   "devDependencies": {
-    "vitest": "catalog:",
-    "typescript": "catalog:"
+    "vitest": "^4.0.18",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "test": "vitest run",
