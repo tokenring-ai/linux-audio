@@ -222,13 +222,6 @@ This package does not define RPC endpoints.
 
 This package does not implement state management. State is managed by the AudioService.
 
-### Development Dependencies
-
-- `@types/wav`: TypeScript definitions for WAV library
-- `vitest`: Testing framework (catalog)
-- `typescript`: TypeScript compiler (catalog)
-
-## System Requirements
 
 - Linux operating system (Ubuntu/Debian tested)
 - ALSA (Advanced Linux Sound Architecture)

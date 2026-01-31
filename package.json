@@ -1,7 +1,7 @@
 {
   "name": "@tokenring-ai/linux-audio",
   "version": "0.2.0",
-  "description": "Linux audio integration using naudiodon2 for Token Ring",
+  "description": "Linux audio integration using naudiodon3 for Token Ring",
   "dependencies": {
     "@tokenring-ai/ai-client": "0.2.0",
     "@tokenring-ai/app": "0.2.0",
