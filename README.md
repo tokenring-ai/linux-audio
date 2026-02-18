@@ -1,6 +1,6 @@
 # @tokenring-ai/linux-audio
 
-Linux audio integration using naudiodon3 for Token Ring AI, providing native audio recording and playback capabilities on Linux systems.
+Linux audio integration using naudiodon3 for Token Ring, providing native audio recording and playback capabilities on Linux systems.
 
 ## Overview
 
@@ -80,8 +80,8 @@ const config = {
 ### Direct Usage
 
 ```typescript
-import LinuxAudioProvider from './LinuxAudioProvider.ts';
-import { LinuxAudioProviderOptionsSchema } from './LinuxAudioProvider.ts';
+import LinuxAudioProvider from '@tokenring-ai/linux-audio';
+import { LinuxAudioProviderOptionsSchema } from '@tokenring-ai/linux-audio';
 
 // Create provider with custom options
 const provider = new LinuxAudioProvider(LinuxAudioProviderOptionsSchema.parse({
@@ -222,6 +222,26 @@ This package does not define RPC endpoints.
 
 This package does not implement state management. State is managed by the AudioService.
 
+## Dependencies
+
+### Production Dependencies
+
+- `@tokenring-ai/ai-client`: ^0.2.0
+- `@tokenring-ai/app`: ^0.2.0
+- `@tokenring-ai/agent`: ^0.2.0
+- `@tokenring-ai/audio`: ^0.2.0
+- `@tokenring-ai/chat`: ^0.2.0
+- `@tokenring-ai/naudiodon3`: ^2.5.0
+- `wav`: ^1.0.2
+- `@types/wav`: ^1.0.4
+- `zod`: ^4.3.6
+
+### Development Dependencies
+
+- `vitest`: ^4.0.18
+- `typescript`: ^5.9.3
+
+### System Dependencies
 
 - Linux operating system (Ubuntu/Debian tested)
 - ALSA (Advanced Linux Sound Architecture)
@@ -264,6 +284,13 @@ try {
 - Recording duration is limited by available disk space
 - Recording files are stored in `/tmp/` with timestamp-based filenames
 - Ensure proper cleanup by using AbortSignal to stop recording
+
+## Testing
+
+```bash
+bun run test
+bun run test:coverage
+```
 
 ## License
 
