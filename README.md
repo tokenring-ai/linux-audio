@@ -140,11 +140,11 @@ await provider.playback('/path/to/audio.mp3');
 
 ##### `playbackWav(filename: string): Promise<string>`
 
-Internal method for playing WAV files using naudiodon3.
+Internal method for playing WAV files using naudiodon3. Reads the WAV file and streams it to the audio output device.
 
 ##### `playbackWithFfmpeg(filename: string): Promise<string>`
 
-Internal method for playing non-WAV files using ffmpeg for format conversion.
+Internal method for playing non-WAV files using ffmpeg for format conversion. Converts the audio to raw PCM format and streams it to the audio output device.
 
 ## Configuration
 
@@ -533,13 +533,13 @@ bun run build
 - `@tokenring-ai/audio`: 0.2.0
 - `@tokenring-ai/chat`: 0.2.0
 - `@tokenring-ai/naudiodon3`: 2.5.0
-- `wav`: ^1.0.2
-- `@types/wav`: ^1.0.4
+- `wav`: 1.0.2
+- `@types/wav`: 1.0.4
 - `zod`: ^4.3.6
 
 ### Development Dependencies
 
-- `vitest`: ^4.0.18
+- `vitest`: ^4.1.0
 - `typescript`: ^5.9.3
 
 ### System Dependencies
