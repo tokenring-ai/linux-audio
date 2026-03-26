@@ -6,7 +6,7 @@ Linux audio integration using naudiodon3 for Token Ring, providing native audio 
 
 The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation of the `AudioProvider` interface using the [naudiodon3](https://github.com/antoniomgorczynski/naudiodon3) library for native audio operations. It enables audio recording and playback on Linux systems within the Token Ring AI framework.
 
-This package is designed to work seamlessly with the Token Ring AI ecosystem, integrating with the `AudioService` as a plugin that automatically registers the `LinuxAudioProvider` when configured.
+This package integrates with the `AudioService` as a plugin that automatically registers the `LinuxAudioProvider` when configured in the app configuration.
 
 ### Key Features
 
@@ -26,10 +26,7 @@ This package requires system-level audio dependencies for Linux:
 
 ```bash
 # Install system dependencies (Ubuntu/Debian)
-sudo apt-get install libasound2-dev
-
-# Install additional dependencies if needed
-sudo apt-get install build-essential
+sudo apt-get install libasound2-dev build-essential
 
 # Optional: for non-WAV audio playback
 sudo apt-get install ffmpeg
@@ -47,37 +44,37 @@ bun install
 Or as a standalone package:
 
 ```bash
-bun install @tokenring-ai/linux-audio
+bun add @tokenring-ai/linux-audio
 ```
 
 ## Core Components
 
 ### LinuxAudioProvider
 
-The main class that implements the `AudioProvider` interface for Linux systems.
+The main class that implements the `AudioProvider` interface for Linux systems using the `naudiodon3` library.
 
 **Implements:** `AudioProvider`
 
 #### Constructor
 
 ```typescript
-new LinuxAudioProvider(options: LinuxAudioProviderOptions)
+new LinuxAudioProvider(options: z.output<typeof LinuxAudioProviderOptionsSchema>)
 ```
 
 **Parameters:**
-- `options` (`LinuxAudioProviderOptions`): Configuration options including type, record settings, and playback settings
+- `options` (`LinuxAudioProviderOptions`): Configuration options validated by `LinuxAudioProviderOptionsSchema`
 
 #### Methods
 
 ##### `record(abortSignal: AbortSignal, options: RecordingOptions): Promise<RecordingResult>`
 
-Records audio from the system microphone to a WAV file.
+Records audio from the system microphone to a WAV file using ALSA audio input.
 
 **Parameters:**
 - `abortSignal` (`AbortSignal`): Signal to stop recording
 - `options` (`RecordingOptions`): Recording options including `sampleRate` and `channels`
 
-**Returns:** `Promise<RecordingResult>` with `filePath` to the recorded audio
+**Returns:** `Promise<RecordingResult>` with `filePath` to the recorded audio file
 
 **RecordingOptions Interface:**
 ```typescript
@@ -90,7 +87,7 @@ interface RecordingOptions {
 **RecordingResult Interface:**
 ```typescript
 interface RecordingResult {
-  filePath: string;       // Path to the recorded audio file
+  filePath: string;       // Path to the recorded audio file (e.g., `/tmp/recording-2024-01-01T12-00-00-000.wav`)
 }
 ```
 
@@ -140,11 +137,28 @@ await provider.playback('/path/to/audio.mp3');
 
 ##### `playbackWav(filename: string): Promise<string>`
 
-Internal method for playing WAV files using naudiodon3. Reads the WAV file and streams it to the audio output device.
+Internal method for playing WAV files using `naudiodon3`. Reads the WAV file header to determine format, then streams the audio data to the system audio output device.
+
+**Parameters:**
+- `filename` (`string`): Path to WAV audio file
+
+**Returns:** `Promise<string>` with the filename
 
 ##### `playbackWithFfmpeg(filename: string): Promise<string>`
 
-Internal method for playing non-WAV files using ffmpeg for format conversion. Converts the audio to raw PCM format and streams it to the audio output device.
+Internal method for playing non-WAV files using `ffmpeg` for format conversion. Converts the audio to raw PCM format (s16le, 48000Hz, stereo) and streams it to the system audio output device.
+
+**Parameters:**
+- `filename` (`string`): Path to audio file (non-WAV format)
+
+**Returns:** `Promise<string>` with the filename
+
+**ffmpeg Command:**
+```bash
+ffmpeg -i <input> -f s16le -acodec pcm_s16le -ar 48000 -ac 2 pipe:1
+```
+
+**Note:** Requires `ffmpeg` to be installed on the system.
 
 ## Configuration
 
@@ -170,7 +184,7 @@ const config = LinuxAudioProviderOptionsSchema.parse({
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `type` | `'linux'` | - | Provider type identifier |
+| `type` | `'linux'` | - | Provider type identifier (must be `'linux'`) |
 | `record.sampleRate` | `number` | `48000` | Audio sample rate in Hz |
 | `record.channels` | `number` | `1` | Number of audio channels (1=mono, 2=stereo) |
 | `record.format` | `string` | `'wav'` | Audio file format |
@@ -207,7 +221,7 @@ const config = {
 The plugin (`plugin.ts`) automatically registers the provider when the app configuration includes audio providers with `type: "linux"`:
 
 ```typescript
-// Plugin registration logic
+// Plugin registration logic (from plugin.ts)
 export default {
   name: packageJSON.name,
   version: packageJSON.version,
@@ -227,6 +241,8 @@ export default {
   config: packageConfigSchema
 }
 ```
+
+The plugin implements the `TokenRingPlugin` interface and is automatically loaded when included in the app's plugin list.
 
 ### Direct Usage
 
@@ -533,14 +549,14 @@ bun run build
 - `@tokenring-ai/audio`: 0.2.0
 - `@tokenring-ai/chat`: 0.2.0
 - `@tokenring-ai/naudiodon3`: 2.5.0
-- `wav`: 1.0.2
-- `@types/wav`: 1.0.4
+- `wav`: ^1.0.2
+- `@types/wav`: ^1.0.4
 - `zod`: ^4.3.6
 
 ### Development Dependencies
 
-- `vitest`: ^4.1.0
-- `typescript`: ^5.9.3
+- `vitest`: ^4.1.1
+- `typescript`: ^6.0.2
 
 ### System Dependencies
 
@@ -554,17 +570,20 @@ bun run build
 
 ```
 pkg/linux-audio/
-├── LinuxAudioProvider.ts    # Main provider implementation
+├── LinuxAudioProvider.ts     # Main provider implementation
 ├── index.ts                  # Package exports
 ├── plugin.ts                 # Token Ring plugin for auto-registration
 ├── package.json              # Package metadata and dependencies
 ├── README.md                 # This documentation
-└── vitest.config.ts          # Test configuration
+├── LICENSE                   # MIT License
+├── vitest.config.ts          # Test configuration
+└── __tests__/                # Test files
+    └── *.test.ts             # Unit tests
 ```
 
 ## Exports
 
-The package exports the following:
+The package exports the following from `index.ts`:
 
 ```typescript
 // Main provider class
@@ -572,6 +591,12 @@ export { default as LinuxAudioProvider } from './LinuxAudioProvider';
 
 // Configuration schema
 export { LinuxAudioProviderOptionsSchema } from './LinuxAudioProvider';
+```
+
+**Note:** The `LinuxAudioProvider` class is the default export and can be imported as:
+
+```typescript
+import LinuxAudioProvider from '@tokenring-ai/linux-audio';
 ```
 
 ## Related Components

@@ -16,8 +16,7 @@ export const LinuxAudioProviderOptionsSchema = z.object({
     channels: 1,
     format: 'wav',
   }),
-  playback: z.object({
-  }).default({})
+  playback: z.object({}).default({})
 });
 
 
@@ -38,7 +37,7 @@ export default class LinuxAudioProvider implements AudioProvider {
       inOptions: {
         channelCount: options.channels ?? this.options.record.channels,
         sampleFormat: SampleFormat16Bit,
-        sampleRate: options.channels ?? this.options.record.sampleRate,
+        sampleRate: options.sampleRate ?? this.options.record.sampleRate,
         deviceId: -1
       }
     });
