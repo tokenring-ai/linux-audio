@@ -3,7 +3,7 @@ import AudioService from "@tokenring-ai/audio/AudioService";
 import {z} from "zod";
 import LinuxAudioProvider from "./LinuxAudioProvider.ts";
 import packageJSON from "./package.json" with {type: "json"};
-import {type LinuxAudioAccount, LinuxAudioAccountSchema, LinuxAudioConfigSchema,} from "./schema.ts";
+import {type LinuxAudioAccount, LinuxAudioAccountSchema, LinuxAudioConfigSchema} from "./schema.ts";
 
 const packageConfigSchema = z.object({
   linuxAudio: LinuxAudioConfigSchema.prefault({accounts: {}}),

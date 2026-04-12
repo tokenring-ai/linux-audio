@@ -1,4 +1,4 @@
-import type {AudioProvider, RecordingOptions, RecordingResult,} from "@tokenring-ai/audio/AudioProvider";
+import type {AudioProvider, RecordingOptions, RecordingResult} from "@tokenring-ai/audio/AudioProvider";
 import AudioIO, {SampleFormat16Bit} from "@tokenring-ai/naudiodon3";
 import {spawn} from "node:child_process";
 import fs from "node:fs";

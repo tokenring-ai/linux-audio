@@ -62,6 +62,7 @@ new LinuxAudioProvider(options: z.output<typeof LinuxAudioProviderOptionsSchema>
 ```
 
 **Parameters:**
+
 - `options` (`LinuxAudioProviderOptions`): Configuration options validated by `LinuxAudioProviderOptionsSchema`
 
 #### Methods
@@ -71,12 +72,14 @@ new LinuxAudioProvider(options: z.output<typeof LinuxAudioProviderOptionsSchema>
 Records audio from the system microphone to a WAV file using ALSA audio input.
 
 **Parameters:**
+
 - `abortSignal` (`AbortSignal`): Signal to stop recording
 - `options` (`RecordingOptions`): Recording options including `sampleRate` and `channels`
 
 **Returns:** `Promise<RecordingResult>` with `filePath` to the recorded audio file
 
 **RecordingOptions Interface:**
+
 ```typescript
 interface RecordingOptions {
   sampleRate?: number;    // Audio sample rate in Hz (default: 48000)
@@ -85,6 +88,7 @@ interface RecordingOptions {
 ```
 
 **RecordingResult Interface:**
+
 ```typescript
 interface RecordingResult {
   filePath: string;       // Path to the recorded audio file (e.g., `/tmp/recording-2024-01-01T12-00-00-000.wav`)
@@ -119,6 +123,7 @@ console.log('Recording saved to:', recording.filePath);
 Plays an audio file through the system audio. Supports WAV files directly and other formats via ffmpeg.
 
 **Parameters:**
+
 - `filename` (`string`): Path to audio file
 
 **Returns:** `Promise<string>` with the filename
@@ -140,6 +145,7 @@ await provider.playback('/path/to/audio.mp3');
 Internal method for playing WAV files using `naudiodon3`. Reads the WAV file header to determine format, then streams the audio data to the system audio output device.
 
 **Parameters:**
+
 - `filename` (`string`): Path to WAV audio file
 
 **Returns:** `Promise<string>` with the filename
@@ -149,11 +155,13 @@ Internal method for playing WAV files using `naudiodon3`. Reads the WAV file hea
 Internal method for playing non-WAV files using `ffmpeg` for format conversion. Converts the audio to raw PCM format (s16le, 48000Hz, stereo) and streams it to the system audio output device.
 
 **Parameters:**
+
 - `filename` (`string`): Path to audio file (non-WAV format)
 
 **Returns:** `Promise<string>` with the filename
 
 **ffmpeg Command:**
+
 ```bash
 ffmpeg -i <input> -f s16le -acodec pcm_s16le -ar 48000 -ac 2 pipe:1
 ```
