@@ -141,12 +141,12 @@ export default class LinuxAudioProvider implements AudioProvider {
       stream.start();
 
       ffmpeg.on("close", () => {
-        stream.quit();
+        void stream.quit();
         resolve(filename);
       });
 
       ffmpeg.on("error", (err) => {
-        stream.quit();
+        void stream.quit();
         reject(err);
       });
 
