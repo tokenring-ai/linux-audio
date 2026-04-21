@@ -1,9 +1,9 @@
-import type {AudioProvider, RecordingOptions, RecordingResult} from "@tokenring-ai/audio/AudioProvider";
-import AudioIO, {SampleFormat16Bit} from "@tokenring-ai/naudiodon3";
-import {spawn} from "node:child_process";
+import { spawn } from "node:child_process";
 import fs from "node:fs";
+import type { AudioProvider, RecordingOptions, RecordingResult } from "@tokenring-ai/audio/AudioProvider";
+import AudioIO, { SampleFormat16Bit } from "@tokenring-ai/naudiodon3";
 import wav from "wav";
-import {z} from "zod";
+import { z } from "zod";
 
 export const LinuxAudioProviderOptionsSchema = z.object({
   type: z.literal("linux"),
@@ -22,15 +22,9 @@ export const LinuxAudioProviderOptionsSchema = z.object({
 });
 
 export default class LinuxAudioProvider implements AudioProvider {
-  constructor(
-    readonly options: z.output<typeof LinuxAudioProviderOptionsSchema>,
-  ) {
-  }
+  constructor(readonly options: z.output<typeof LinuxAudioProviderOptionsSchema>) {}
 
-  async record(
-    abortSignal: AbortSignal,
-    options: RecordingOptions,
-  ): Promise<RecordingResult> {
+  async record(abortSignal: AbortSignal, options: RecordingOptions): Promise<RecordingResult> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filePath = `/tmp/recording-${timestamp}.${this.options.record.format}`;
 
@@ -52,14 +46,12 @@ export default class LinuxAudioProvider implements AudioProvider {
     stream.pipe(writer);
     stream.start();
 
-    await new Promise((resolve) =>
-      abortSignal.addEventListener("abort", resolve, {once: true}),
-    );
+    await new Promise(resolve => abortSignal.addEventListener("abort", resolve, { once: true }));
 
     await stream.quit();
     writer.end();
 
-    return {filePath};
+    return { filePath };
   }
 
   playback(filename: string): Promise<string> {
@@ -84,7 +76,7 @@ export default class LinuxAudioProvider implements AudioProvider {
       const reader = new wav.Reader();
       let stream: any = null;
 
-      reader.on("format", (format) => {
+      reader.on("format", format => {
         stream = AudioIO({
           outOptions: {
             channelCount: format.channels,
@@ -103,7 +95,7 @@ export default class LinuxAudioProvider implements AudioProvider {
         resolve(filename);
       });
 
-      reader.on("error", (err) => {
+      reader.on("error", err => {
         if (stream) stream.quit();
         reject(err);
       });
@@ -114,19 +106,7 @@ export default class LinuxAudioProvider implements AudioProvider {
 
   private playbackWithFfmpeg(filename: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const ffmpeg = spawn("ffmpeg", [
-        "-i",
-        filename,
-        "-f",
-        "s16le",
-        "-acodec",
-        "pcm_s16le",
-        "-ar",
-        "48000",
-        "-ac",
-        "2",
-        "pipe:1",
-      ]);
+      const ffmpeg = spawn("ffmpeg", ["-i", filename, "-f", "s16le", "-acodec", "pcm_s16le", "-ar", "48000", "-ac", "2", "pipe:1"]);
 
       const stream = AudioIO({
         outOptions: {
@@ -145,13 +125,12 @@ export default class LinuxAudioProvider implements AudioProvider {
         resolve(filename);
       });
 
-      ffmpeg.on("error", (err) => {
+      ffmpeg.on("error", err => {
         void stream.quit();
         reject(err);
       });
 
-      ffmpeg.stderr.on("data", () => {
-      });
+      ffmpeg.stderr.on("data", () => {});
     });
   }
 }

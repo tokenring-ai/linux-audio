@@ -1,1 +1,1 @@
-export {default as LinuxAudioProvider} from "./LinuxAudioProvider.ts";
+export { default as LinuxAudioProvider } from "./LinuxAudioProvider.ts";
