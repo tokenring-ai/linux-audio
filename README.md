@@ -1,12 +1,16 @@
 # @tokenring-ai/linux-audio
 
-Linux audio integration using naudiodon3 for Token Ring, providing native audio recording and playback capabilities on Linux systems.
+Linux audio integration using naudiodon3 for Token Ring, providing native audio recording and playback capabilities on
+Linux systems.
 
 ## Overview
 
-The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation of the `AudioProvider` interface using the [naudiodon3](https://github.com/antoniomgorczynski/naudiodon3) library for native audio operations. It enables audio recording and playback on Linux systems within the Token Ring AI framework.
+The `@tokenring-ai/linux-audio` package provides a Linux-specific implementation of the `AudioProvider` interface using
+the [naudiodon3](https://github.com/antoniomgorczynski/naudiodon3) library for native audio operations. It enables audio
+recording and playback on Linux systems within the Token Ring AI framework.
 
-This package integrates with the `AudioService` as a plugin that automatically registers the `LinuxAudioProvider` when configured in the app configuration.
+This package integrates with the `AudioService` as a plugin that automatically registers the `LinuxAudioProvider` when
+configured in the app configuration.
 
 ### Key Features
 
@@ -47,250 +51,113 @@ Or as a standalone package:
 bun add @tokenring-ai/linux-audio
 ```
 
-## Core Components
-
-### LinuxAudioProvider
-
-The main class that implements the `AudioProvider` interface for Linux systems using the `naudiodon3` library.
-
-**Implements:** `AudioProvider`
-
-#### Constructor
-
-```typescript
-new LinuxAudioProvider(options: z.output<typeof LinuxAudioProviderOptionsSchema>)
-```
-
-**Parameters:**
-
-- `options` (`LinuxAudioProviderOptions`): Configuration options validated by `LinuxAudioProviderOptionsSchema`
-
-#### Methods
-
-##### `record(abortSignal: AbortSignal, options: RecordingOptions): Promise<RecordingResult>`
-
-Records audio from the system microphone to a WAV file using ALSA audio input.
-
-**Parameters:**
-
-- `abortSignal` (`AbortSignal`): Signal to stop recording
-- `options` (`RecordingOptions`): Recording options including `sampleRate` and `channels`
-
-**Returns:** `Promise<RecordingResult>` with `filePath` to the recorded audio file
-
-**RecordingOptions Interface:**
-
-```typescript
-interface RecordingOptions {
-  sampleRate?: number;    // Audio sample rate in Hz (default: 48000)
-  channels?: number;      // Number of audio channels (default: 1)
-}
-```
-
-**RecordingResult Interface:**
-
-```typescript
-interface RecordingResult {
-  filePath: string;       // Path to the recorded audio file (e.g., `/tmp/recording-2024-01-01T12-00-00-000.wav`)
-}
-```
-
-**Example:**
-
-```typescript
-import LinuxAudioProvider from '@tokenring-ai/linux-audio';
-
-const provider = new LinuxAudioProvider({
-  type: 'linux',
-  record: {
-    sampleRate: 48000,
-    channels: 1,
-    format: 'wav'
-  },
-  playback: {}
-});
-
-const abortController = new AbortController();
-const recording = await provider.record(abortController.signal, {
-  sampleRate: 48000,
-  channels: 1
-});
-console.log('Recording saved to:', recording.filePath);
-```
-
-##### `playback(filename: string): Promise<string>`
-
-Plays an audio file through the system audio. Supports WAV files directly and other formats via ffmpeg.
-
-**Parameters:**
-
-- `filename` (`string`): Path to audio file
-
-**Returns:** `Promise<string>` with the filename
-
-**Example:**
-
-```typescript
-// Play WAV file
-await provider.playback('/path/to/audio.wav');
-
-// Play other formats (requires ffmpeg)
-await provider.playback('/path/to/audio.mp3');
-```
-
-#### Private Methods
-
-##### `playbackWav(filename: string): Promise<string>`
-
-Internal method for playing WAV files using `naudiodon3`. Reads the WAV file header to determine format, then streams the audio data to the system audio output device.
-
-**Parameters:**
-
-- `filename` (`string`): Path to WAV audio file
-
-**Returns:** `Promise<string>` with the filename
-
-##### `playbackWithFfmpeg(filename: string): Promise<string>`
-
-Internal method for playing non-WAV files using `ffmpeg` for format conversion. Converts the audio to raw PCM format (s16le, 48000Hz, stereo) and streams it to the system audio output device.
-
-**Parameters:**
-
-- `filename` (`string`): Path to audio file (non-WAV format)
-
-**Returns:** `Promise<string>` with the filename
-
-**ffmpeg Command:**
-
-```bash
-ffmpeg -i <input> -f s16le -acodec pcm_s16le -ar 48000 -ac 2 pipe:1
-```
-
-**Note:** Requires `ffmpeg` to be installed on the system.
-
 ## Configuration
 
 ### Configuration Schema
 
-The package uses `LinuxAudioProviderOptionsSchema` for configuration validation:
+The package uses `LinuxAudioAccountSchema` and `LinuxAudioConfigSchema` for configuration validation:
 
 ```typescript
-import { LinuxAudioProviderOptionsSchema } from '@tokenring-ai/linux-audio';
+import { LinuxAudioConfigSchema } from '@tokenring-ai/linux-audio/schema';
 
-const config = LinuxAudioProviderOptionsSchema.parse({
-  type: 'linux',
-  record: {
-    sampleRate: 48000,  // Default: 48000
-    channels: 1,        // Default: 1
-    format: 'wav'       // Default: 'wav'
-  },
-  playback: {}
+const config = LinuxAudioConfigSchema.parse({
+  accounts: {
+    linux: {
+      record: {
+        sampleRate: 48000,  // Default: 48000
+        channels: 1,        // Default: 1
+        format: 'wav'       // Default: 'wav'
+      },
+      playback: {}
+    }
+  }
 });
 ```
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `type` | `'linux'` | - | Provider type identifier (must be `'linux'`) |
-| `record.sampleRate` | `number` | `48000` | Audio sample rate in Hz |
-| `record.channels` | `number` | `1` | Number of audio channels (1=mono, 2=stereo) |
-| `record.format` | `string` | `'wav'` | Audio file format |
-| `playback` | `object` | `{}` | Playback configuration (currently empty) |
+| Option              | Type     | Default | Description                                 |
+|---------------------|----------|---------|---------------------------------------------|
+| `accounts`          | `object` | `{}`    | Named audio provider accounts               |
+| `accounts.<name>`   | `object` | -       | Account configuration by name               |
+| `record.sampleRate` | `number` | `48000` | Audio sample rate in Hz                     |
+| `record.channels`   | `number` | `1`     | Number of audio channels (1=mono, 2=stereo) |
+| `record.format`     | `string` | `'wav'` | Audio file format                           |
+| `playback`          | `object` | `{}`    | Playback configuration (currently empty)    |
 
-## Integration
+### Environment Variables
+
+The plugin supports configuration via environment variables:
+
+| Variable              | Description                                          |
+|-----------------------|------------------------------------------------------|
+| `LINUX_AUDIO`         | Enable Linux audio with default name "linux"         |
+| `LINUX_AUDIO_NAME`    | Custom name for the default Linux audio account      |
+| `LINUX_AUDIO_NAME{n}` | Additional account names (e.g., `LINUX_AUDIO_NAME1`) |
+
+## Plugin Integration
 
 ### Plugin Registration (Automatic)
 
-When used as a Token Ring AI plugin, the `LinuxAudioProvider` is automatically registered with the `AudioService` based on the app configuration:
+When used as a Token Ring AI plugin, the `LinuxAudioProvider` is automatically registered with the `AudioService` based
+on the app configuration:
 
 ```typescript
-// The plugin is automatically registered when installed in a Token Ring AI app
-// No manual registration required
+import type { App } from '@tokenring-ai/app';
+import linuxAudioPlugin from '@tokenring-ai/linux-audio/plugin';
 
-// Configure in your app config
-const config = {
-  audio: {
-    providers: {
-      linux: {
-        type: 'linux',
-        record: {
-          sampleRate: 48000,
-          channels: 1,
-          format: 'wav'
-        },
-        playback: {}
+const app = new App({
+  plugins: [
+    linuxAudioPlugin
+  ],
+  config: {
+    linuxAudio: {
+      accounts: {
+        linux: {
+          record: {
+            sampleRate: 48000,
+            channels: 1,
+            format: 'wav'
+          },
+          playback: {}
+        }
       }
     }
   }
-};
+});
 ```
 
-The plugin (`plugin.ts`) automatically registers the provider when the app configuration includes audio providers with `type: "linux"`:
+The plugin (`plugin.ts`) automatically registers the provider when the app configuration includes audio accounts:
 
 ```typescript
 // Plugin registration logic (from plugin.ts)
 export default {
   name: packageJSON.name,
+  displayName: "Linux Audio Implementation",
   version: packageJSON.version,
   description: packageJSON.description,
   install(app, config) {
-    if (config.audio) {
-      app.waitForService(AudioService, audioService => {
-        for (const name in config.audio!.providers) {
-          const provider = config.audio!.providers[name];
-          if (provider.type === "linux") {
-            audioService.registerProvider(name, new LinuxAudioProvider(LinuxAudioProviderOptionsSchema.parse(provider)));
-          }
-        }
-      });
-    }
+    addAccountsFromEnv(config.linuxAudio.accounts);
+    if (Object.keys(config.linuxAudio.accounts).length === 0) return;
+
+    app.waitForService(AudioService, audioService => {
+      for (const [name, account] of Object.entries(config.linuxAudio.accounts)) {
+        audioService.registerProvider(
+          name,
+          new LinuxAudioProvider({
+            type: "linux",
+            ...LinuxAudioAccountSchema.parse(account),
+          }),
+        );
+      }
+    });
   },
   config: packageConfigSchema
-}
+} satisfies TokenRingPlugin<typeof packageConfigSchema>;
 ```
 
-The plugin implements the `TokenRingPlugin` interface and is automatically loaded when included in the app's plugin list.
-
-### Direct Usage
-
-```typescript
-import LinuxAudioProvider from '@tokenring-ai/linux-audio';
-
-// Create provider with custom options
-const provider = new LinuxAudioProvider({
-  type: 'linux',
-  record: {
-    sampleRate: 48000,
-    channels: 1,
-    format: 'wav'
-  },
-  playback: {}
-});
-
-// Record audio
-const abortController = new AbortController();
-const recording = await provider.record(abortController.signal, {
-  sampleRate: 48000,
-  channels: 1
-});
-console.log('Recording saved to:', recording.filePath);
-
-// Play back audio
-await provider.playback(recording.filePath);
-```
-
-### Integration with AudioService
-
-The package integrates with the `@tokenring-ai/audio` package's `AudioService`:
-
-```typescript
-import AudioService from '@tokenring-ai/audio/AudioService';
-import LinuxAudioProvider from '@tokenring-ai/linux-audio';
-
-// The plugin automatically registers the provider when configured
-// This happens in the plugin's install() method
-```
+The plugin implements the `TokenRingPlugin` interface and is automatically loaded when included in the app's plugin
+list.
 
 ## Usage Examples
 
@@ -487,12 +354,12 @@ try {
 
 ### Common Error Scenarios
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `Audio file not found` | File path is invalid or file doesn't exist | Verify file path before playback |
-| `Audio device not available` | ALSA device is not accessible | Check ALSA configuration and permissions |
-| `Permission denied` | Cannot write to `/tmp` directory | Check directory permissions |
-| `ffmpeg error` | ffmpeg is not installed or failed | Install ffmpeg: `sudo apt-get install ffmpeg` |
+| Error                        | Cause                                      | Solution                                      |
+|------------------------------|--------------------------------------------|-----------------------------------------------|
+| `Audio file not found`       | File path is invalid or file doesn't exist | Verify file path before playback              |
+| `Audio device not available` | ALSA device is not accessible              | Check ALSA configuration and permissions      |
+| `Permission denied`          | Cannot write to `/tmp` directory           | Check directory permissions                   |
+| `ffmpeg error`               | ffmpeg is not installed or failed          | Install ffmpeg: `sudo apt-get install ffmpeg` |
 
 ## Best Practices
 
@@ -501,7 +368,8 @@ try {
 - **Sample Rate**: Use 48000 Hz for high-quality audio, 16000 Hz for voice-only applications
 - **Channels**: Use mono (1 channel) for voice recordings to reduce file size
 - **Duration**: Use AbortSignal to control recording duration and prevent infinite recordings
-- **File Cleanup**: Recordings are stored in `/tmp/` with timestamp-based filenames; implement cleanup logic for production use
+- **File Cleanup**: Recordings are stored in `/tmp/` with timestamp-based filenames; implement cleanup logic for
+  production use
 - **Error Handling**: Always wrap audio operations in try/catch blocks
 - **File Naming**: Recordings use ISO timestamp format: `recording-YYYY-MM-DDTHH-mm-ss.sss.wav`
 
@@ -551,11 +419,8 @@ bun run build
 
 ### Production Dependencies
 
-- `@tokenring-ai/ai-client`: 0.2.0
 - `@tokenring-ai/app`: 0.2.0
-- `@tokenring-ai/agent`: 0.2.0
 - `@tokenring-ai/audio`: 0.2.0
-- `@tokenring-ai/chat`: 0.2.0
 - `@tokenring-ai/naudiodon3`: 2.5.0
 - `wav`: ^1.0.2
 - `@types/wav`: ^1.0.4
@@ -576,17 +441,16 @@ bun run build
 
 ## Package Structure
 
-```
+```text
 pkg/linux-audio/
 ├── LinuxAudioProvider.ts     # Main provider implementation
 ├── index.ts                  # Package exports
 ├── plugin.ts                 # Token Ring plugin for auto-registration
+├── schema.ts                 # Configuration schemas
 ├── package.json              # Package metadata and dependencies
 ├── README.md                 # This documentation
 ├── LICENSE                   # MIT License
-├── vitest.config.ts          # Test configuration
-└── __tests__/                # Test files
-    └── *.test.ts             # Unit tests
+└── vitest.config.ts          # Test configuration
 ```
 
 ## Exports
@@ -596,9 +460,6 @@ The package exports the following from `index.ts`:
 ```typescript
 // Main provider class
 export { default as LinuxAudioProvider } from './LinuxAudioProvider';
-
-// Configuration schema
-export { LinuxAudioProviderOptionsSchema } from './LinuxAudioProvider';
 ```
 
 **Note:** The `LinuxAudioProvider` class is the default export and can be imported as:
@@ -607,12 +468,24 @@ export { LinuxAudioProviderOptionsSchema } from './LinuxAudioProvider';
 import LinuxAudioProvider from '@tokenring-ai/linux-audio';
 ```
 
+### Schema Exports
+
+Schemas are available from the `schema.ts` file:
+
+```typescript
+import { 
+  LinuxAudioAccountSchema,
+  LinuxAudioConfigSchema,
+  type LinuxAudioAccount,
+  type LinuxAudioConfig
+} from '@tokenring-ai/linux-audio/schema';
+```
+
 ## Related Components
 
 - [`@tokenring-ai/audio`](../audio/README.md): Core audio service and provider interface
 - [`@tokenring-ai/naudiodon3`](../naudiodon3/README.md): Native audio I/O library
 - [`@tokenring-ai/app`](../app/README.md): Base application framework
-- [`@tokenring-ai/agent`](../agent/README.md): Agent orchestration system
 
 ## License
 

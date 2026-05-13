@@ -3,9 +3,9 @@
   "version": "0.2.0",
   "description": "Platform-specific audio driver for Linux systems using naudiodon3.",
   "dependencies": {
-    "@tokenring-ai/app": "0.2.0",
-    "@tokenring-ai/audio": "0.2.0",
-    "@tokenring-ai/naudiodon3": "2.5.0",
+    "@tokenring-ai/app": "workspace:*",
+    "@tokenring-ai/audio": "workspace:*",
+    "@tokenring-ai/naudiodon3": "workspace:*",
     "wav": "^1.0.2",
     "@types/wav": "^1.0.4",
     "zod": "^4.3.6"
