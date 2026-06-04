@@ -51,7 +51,12 @@ export default class LinuxAudioProvider implements AudioProvider {
     await stream.quit();
     writer.end();
 
-    return { filePath };
+    return {
+      filePath,
+      mediaType: this.options.record.format === "wav" ? "audio/wav" : undefined,
+      sampleRate: options.sampleRate ?? this.options.record.sampleRate,
+      channels: options.channels ?? this.options.record.channels,
+    };
   }
 
   playback(filename: string): Promise<string> {
