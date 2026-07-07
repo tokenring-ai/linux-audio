@@ -30,7 +30,7 @@ export default class LinuxAudioProvider implements AudioProvider {
 
     const writer = new wav.FileWriter(filePath, {
       channels: options.channels ?? this.options.record.channels,
-      sampleRate: options?.sampleRate ?? this.options.record.sampleRate,
+      sampleRate: options.sampleRate ?? this.options.record.sampleRate,
       bitDepth: 16,
     });
 
